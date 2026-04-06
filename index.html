@@ -1,135 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <title>Watch & Earn</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earn Cash Pro</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f0f2f5; padding: 20px; margin: 0; }
-        .app-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        .wallet { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; }
-        #balance { font-size: 38px; font-weight: bold; }
-        .progress-text { font-size: 13px; color: #666; margin-bottom: 5px; font-weight: bold; }
-        .progress-container { background: #ddd; border-radius: 10px; height: 12px; width: 100%; margin-bottom: 20px; overflow: hidden; }
-        #progressBar { background: #11998e; height: 100%; width: 0%; transition: 0.5s; }
-        #adOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 1000; flex-direction: column; justify-content: center; }
-        video { width: 100%; max-height: 80vh; }
-        #adTimer { color: white; position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; }
-        .btn-watch { background: #2980b9; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .btn-redeem { background: #bdc3c7; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; margin-top: 20px; cursor: not-allowed; }
-        .btn-redeem.active { background: #e67e22; cursor: pointer; }
-        .upi-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .upi-content { background: white; padding: 20px; border-radius: 15px; width: 80%; max-width: 300px; }
-        input { width: 90%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 15px 0; text-align: center; }
-    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 </head>
-<body>
+<body style="text-align: center; font-family: sans-serif; padding-top: 50px;">
 
-    <div class="app-card">
-        <div class="wallet">
-            <small>Wallet Balance</small><br>
-            <span id="balance">0</span> <small>Coins</small>
-            <div style="font-size:14px;">(100 Coins = ₹10)</div>
-        </div>
-
-        <div class="progress-text" id="targetText">Target: 0/3 Ads to get 10 Coins</div>
-        <div class="progress-container">
-            <div id="progressBar"></div>
-        </div>
-
-        <button id="watchBtn" class="btn-watch" onclick="showAd()">Watch Video Ad</button>
-        <button id="redeemBtn" class="btn-redeem" onclick="openUpiModal()">Redeem Now</button>
+    <div id="login-screen">
+        <h2>Watch & Earn</h2>
+        <p>Login to start earning</p>
+        <button onclick="loginWithGoogle()" style="padding: 15px 30px; background: #4285F4; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+            Continue with Google
+        </button>
     </div>
 
-    <div id="adOverlay">
-        <div id="adTimer">Wait...</div>
-        <video id="adVideo" playsinline>
-            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-        </video>
-    </div>
-
-    <div id="upiModal" class="upi-modal">
-        <div class="upi-content">
-            <strong>Enter Payment Details</strong>
-            <input type="text" id="upiId" placeholder="Enter UPI ID (name@apl)">
-            <button style="background:#27ae60; color:white; border:none; padding:10px 20px; border-radius:5px;" onclick="finalSubmit()">Submit Request</button>
-            <button style="background:none; border:none; color:red; margin-top:10px;" onclick="closeModal()">Cancel</button>
-        </div>
+    <div id="main-app" style="display:none;">
+        <h2 id="user-name">Welcome!</h2>
+        <div style="background: gold; padding: 20px; display: inline-block; border-radius: 10px;">Coins: 100</div>
+        <br><br>
+        <button onclick="logout()">Logout</button>
     </div>
 
     <script>
-        // Memory se coins load karna (Saving System)
-        let coins = parseInt(localStorage.getItem('savedCoins')) || 0;
-        let adCount = 0;
-        const target = 3;
-        const ads = [
-            "https://www.w3schools.com/html/mov_bbb.mp4",
-            "https://www.w3schools.com/html/movie.mp4"
-        ];
+        // Aapka Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCCpQmlyMQuzShY22Wnf53ajiyEdHofPv8",
+            authDomain: "watch-and-earn-22586.firebaseapp.com",
+            projectId: "watch-and-earn-22586",
+            storageBucket: "watch-and-earn-22586.firebasestorage.app",
+            messagingSenderId: "1064239379784",
+            appId: "1:1064239379784:web:de48b0ea0826164c3eef7d"
+        };
 
-        // App khulte hi coins dikhana
-        updateUI();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-        function showAd() {
-            const video = document.getElementById('adVideo');
-            video.src = ads[Math.floor(Math.random() * ads.length)];
-            document.getElementById('adOverlay').style.display = 'flex';
-            video.play();
-
-            let timeLeft = 10;
-            const timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('adTimer').innerText = `Wait: ${timeLeft}s`;
-                if(timeLeft <= 0) {
-                    clearInterval(timer);
-                    closeAd();
-                }
-            }, 1000);
+        // Google Login (Redirect Mode)
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
         }
 
-        function closeAd() {
-            document.getElementById('adOverlay').style.display = 'none';
-            document.getElementById('adVideo').pause();
-            adCount++;
-            
-            if(adCount === target) {
-                coins += 10;
-                adCount = 0;
-                // Coins ko phone ki memory mein save karna
-                localStorage.setItem('savedCoins', coins);
-                alert("Line poori hui! 10 coins save ho gaye.");
+        // Login check karne ke liye
+        auth.getRedirectResult().then((result) => {
+            if (result.user) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                document.getElementById('user-name').innerText = "Hello, " + result.user.displayName;
             }
-            updateUI();
-        }
+        });
 
-        function updateUI() {
-            document.getElementById('balance').innerText = coins;
-            let prog = (adCount / target) * 100;
-            document.getElementById('progressBar').style.width = prog + "%";
-            document.getElementById('targetText').innerText = `Target: ${adCount}/${target} Ads to get 10 Coins`;
-
-            const rBtn = document.getElementById('redeemBtn');
-            if(coins >= 100) { rBtn.classList.add('active'); } 
-            else { rBtn.classList.remove('active'); }
-        }
-
-        function openUpiModal() {
-            if(coins < 100) { alert("Redeem ke liye 100 coins chahiye!"); return; }
-            document.getElementById('upiModal').style.display = 'flex';
-        }
-
-        function closeModal() { document.getElementById('upiModal').style.display = 'none'; }
-
-        function finalSubmit() {
-            const upi = document.getElementById('upiId').value;
-            if(upi.includes("@")) {
-                alert(`SUCCESS!\n₹${coins/10} Redeem request sent for ${upi}`);
-                coins = 0;
-                localStorage.setItem('savedCoins', 0); // Reset memory
-                updateUI();
-                closeModal();
-            } else { alert("Sahi UPI ID daalein!"); }
+        function logout() {
+            auth.signOut().then(() => { location.reload(); });
         }
     </script>
 </body>
-  </html>
+</html>
