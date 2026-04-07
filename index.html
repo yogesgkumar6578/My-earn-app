@@ -3,93 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch & Earn Pro</title>
+    <title>Watch & Earn - Real App</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; justify-content: center; align-items: center; height: 100vh; color: #333; }
-        .card { background: white; padding: 40px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 90%; max-width: 400px; transition: 0.3s; }
-        h2 { margin-bottom: 15px; color: #444; }
-        p { margin-bottom: 30px; color: #777; font-size: 14px; line-height: 1.5; }
-        .btn-google { background: #4285F4; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3); }
-        .btn-google:active { transform: scale(0.98); }
-        .user-info { display: none; }
-        .coin-section { background: #fff9db; border: 2px dashed #fcc419; padding: 20px; border-radius: 15px; margin: 20px 0; }
-        .coin-count { font-size: 32px; font-weight: 800; color: #e67e22; }
-        .watch-btn { background: #2ecc71; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 18px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
-        .logout-link { display: block; margin-top: 20px; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold; }
+        body { font-family: sans-serif; background: #121212; color: white; margin: 0; text-align: center; }
+        .container { padding: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-top: 50px; border: 1px solid #333; }
+        .coin-box { font-size: 24px; color: #ffd700; margin: 20px 0; background: #222; padding: 10px; border-radius: 10px; }
+        button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-google { background: white; color: black; }
+        .btn-video { background: #ff0000; color: white; }
+        .btn-redeem { background: #008000; color: white; }
+        #video-player { display: none; margin-top: 20px; }
+        #redeem-screen { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <div id="login-screen">
-            <h2>💰 Earn Money</h2>
-            <p>Google se login karein aur video dekh kar unlimited coins kamayein.</p>
-            <button class="btn-google" onclick="login()">
-                Continue with Google
-            </button>
+<div class="container">
+    <div id="login-screen" class="card">
+        <h1>Watch & Earn 💰</h1>
+        <p>Login karke real coins kamayein</p>
+        <button class="btn-google" onclick="login()">Continue with Google</button>
+    </div>
+
+    <div id="main-app" style="display:none;">
+        <div class="card">
+            <h2 id="user-name">Welcome</h2>
+            <div class="coin-box">🪙 Total Coins: <span id="balance">0</span></div>
+            
+            <button class="btn-video" onclick="showVideo()">📺 Play Video (Earn 10 Coins)</button>
+            <button class="btn-redeem" onclick="showRedeem()">🎁 Redeem Coins</button>
+            <p onclick="logout()" style="color: grey; cursor: pointer; margin-top: 20px;">Logout</p>
         </div>
 
-        <div id="main-app" class="user-info">
-            <h3 id="user-name">Welcome!</h3>
-            <div class="coin-section">
-                <p style="margin-bottom: 5px;">Aapka Balance</p>
-                <div class="coin-count">🪙 <span id="balance">0</span></div>
-            </div>
-            <button class="watch-btn" onclick="addCoins()">📺 Watch Video</button>
-            <span class="logout-link" onclick="logout()">LOGOUT</span>
+        <div id="video-player">
+            <iframe id="yt-player" width="100%" height="200" src="" frameborder="0" allowfullscreen></iframe>
+            <p>Video dekhein... 15 second mein coins jud jayenge!</p>
         </div>
     </div>
 
-    <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCCpQmlyMQuzShY22Wnf53ajiyEdHofPv8",
-            authDomain: "watch-and-earn-22586.firebaseapp.com",
-            projectId: "watch-and-earn-22586",
-            storageBucket: "watch-and-earn-22586.firebasestorage.app",
-            messagingSenderId: "1064239379784",
-            appId: "1:1064239379784:web:de48b0ea0826164c3eef7d"
-        };
+    <div id="redeem-screen" class="card">
+        <h2>Redeem Your Money</h2>
+        <p>1000 Coins = ₹100</p>
+        <input type="text" id="upi-id" placeholder="Enter UPI ID" style="width: 80%; padding: 10px; margin-bottom: 10px;">
+        <button class="btn-redeem" onclick="processRedeem()">Submit Request</button>
+        <button onclick="hideRedeem()" style="background: grey;">Back</button>
+    </div>
+</div>
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCCpQmlyMQuzShY22Wnf53ajiyEdHofPv8",
+        authDomain: "watch-and-earn-22586.firebaseapp.com",
+        projectId: "watch-and-earn-22586",
+        databaseURL: "https://watch-and-earn-22586-default-rtdb.firebaseio.com/",
+        storageBucket: "watch-and-earn-22586.firebasestorage.app",
+        messagingSenderId: "1064239379784",
+        appId: "1:1064239379784:web:de48b0ea0826164c3eef7d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    function login() {
         const provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
+        auth.signInWithPopup(provider);
+    }
 
-        // Login Function
-        function login() {
-            auth.signInWithPopup(provider).catch(() => {
-                auth.signInWithRedirect(provider);
+    function logout() { auth.signOut().then(() => location.reload()); }
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('user-name').innerText = "Hello, " + user.displayName;
+            
+            // Real Data Fetch from Firebase
+            database.ref('users/' + user.uid).on('value', (snapshot) => {
+                const data = snapshot.val();
+                document.getElementById('balance').innerText = data ? data.coins : 0;
             });
         }
+    });
 
-        // Logout Function
-        function logout() {
-            auth.signOut().then(() => {
-                location.reload();
+    function showVideo() {
+        document.getElementById('video-player').style.display = 'block';
+        // Yahan aap koi bhi YouTube video link daal sakte hain
+        document.getElementById('yt-player').src = "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1";
+        
+        // 15 second baad auto coin add
+        setTimeout(() => {
+            const user = auth.currentUser;
+            database.ref('users/' + user.uid).transaction((currentData) => {
+                return { coins: (currentData ? currentData.coins : 0) + 10 };
             });
-        }
+            alert("Video Complete! 10 Coins Added.");
+            document.getElementById('video-player').style.display = 'none';
+            document.getElementById('yt-player').src = "";
+        }, 15000);
+    }
 
-        // Coin System (Abhi ke liye local, baad mein database se jodenge)
-        let coins = 0;
-        function addCoins() {
-            coins += 10; // Har click par 10 coin badhenge
-            document.getElementById('balance').innerText = coins;
-            alert("Mubarak ho! Aapne 10 coins kamaye.");
-        }
+    function showRedeem() { document.getElementById('main-app').style.display = 'none'; document.getElementById('redeem-screen').style.display = 'block'; }
+    function hideRedeem() { document.getElementById('main-app').style.display = 'block'; document.getElementById('redeem-screen').style.display = 'none'; }
 
-        // Auth State Observer (Ye check karega user logged in hai ya nahi)
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-                document.getElementById('user-name').innerText = "Hello, " + user.displayName;
-            }
-        });
-    </script>
+    function processRedeem() {
+        const upi = document.getElementById('upi-id').value;
+        if(upi) { alert("Redeem request sent for UPI: " + upi + ". Admin will process in 24h."); hideRedeem(); }
+        else { alert("Please enter UPI ID"); }
+    }
+</script>
 </body>
 </html>
