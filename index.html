@@ -3,77 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earn Cash Pro</title>
+    <title>Watch & Earn - Professional</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; margin: 0; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 450px; background: white; min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0f2f5; margin: 0; padding-bottom: 20px; }
+        .header { background: #1a73e8; color: white; padding: 20px; text-align: center; border-radius: 0 0 20px 20px; }
+        .balance-card { background: white; width: 90%; margin: -20px auto 20px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .coin-txt { font-size: 30px; font-weight: bold; color: #1a73e8; }
         
-        /* Header & Balance */
-        .header { background: #6c5ce7; color: white; padding: 30px 20px; border-radius: 0 0 30px 30px; text-align: center; }
-        .balance-card { background: white; color: #333; width: 80%; margin: -30px auto 20px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
-        .coin-val { font-size: 35px; font-weight: bold; color: #6c5ce7; }
-
-        /* Task Section */
-        .task-card { margin: 20px; padding: 20px; border: 2px solid #eee; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .task-info h4 { margin: 0; color: #333; }
-        .task-info p { margin: 5px 0 0; font-size: 12px; color: #888; }
+        /* Grid System for Tasks */
+        .task-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
+        .task-item { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #eee; }
+        .task-item img { width: 40px; margin-bottom: 10px; }
+        .task-item h4 { margin: 0; font-size: 14px; color: #333; }
         
-        .btn-action { background: #6c5ce7; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-action:disabled { background: #ccc; }
-
-        /* Withdraw Modal */
-        .withdraw-section { padding: 20px; border-top: 1px solid #eee; margin-top: 20px; }
+        /* Withdraw Section */
+        .withdraw-box { background: white; margin: 15px; padding: 20px; border-radius: 15px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
-        .btn-withdraw { width: 100%; background: #00b894; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 16px; font-weight: bold; }
-
-        #timer-box { display: none; font-weight: bold; color: #d63031; }
+        .btn-red { background: #34a853; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; }
+        
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; justify-content: center; align-items: center; flex-direction: column; z-index: 100; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div id="login-page" style="padding: 50px 20px; text-align: center;">
-        <h1 style="color: #6c5ce7;">Earn Daily 💰</h1>
-        <p>Login karke task pure karein aur coins kamayein.</p>
-        <button onclick="login()" style="width:100%; padding:15px; background:white; border:1px solid #ddd; border-radius:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
-            <img src="https://www.google.com/favicon.ico" width="20"> Sign in with Google
-        </button>
+<div id="login-screen" style="text-align:center; padding:100px 20px;">
+    <h1>💰 Earn Real Cash</h1>
+    <button onclick="login()" style="padding:15px 30px; border-radius:30px; border:none; background:#1a73e8; color:white; font-weight:bold;">Login with Google</button>
+</div>
+
+<div id="main-app" style="display:none;">
+    <div class="header">
+        <h3>Welcome, <span id="u-name">User</span></h3>
     </div>
 
-    <div id="main-app" style="display: none;">
-        <div class="header">
-            <h3>Namaste, <span id="user-display-name">User</span>!</h3>
-        </div>
-
-        <div class="balance-card">
-            <p style="margin:0; font-size:14px; color:#666;">Aapki Kamayi</p>
-            <div class="coin-val">🪙 <span id="balance">0</span></div>
-            <p style="margin:0; font-size:12px;">(10 Coins = ₹10)</p>
-        </div>
-
-        <div class="task-card">
-            <div class="task-info">
-                <h4>Daily Task 1</h4>
-                <p>Wait 20s to get 1 Coin</p>
-                <div id="timer-box">Wait: <span id="sec">20</span>s</div>
-            </div>
-            <button class="btn-action" id="task-btn" onclick="startTask()">Start Task</button>
-        </div>
-
-        <div class="withdraw-section">
-            <h4>Paisa Nikalein (Redeem)</h4>
-            <p style="font-size:12px; color:red;">*Minimum 10 Coins chahiye</p>
-            <input type="text" id="upi-id" placeholder="UPI ID (Paytm/PhonePe)">
-            <button class="btn-withdraw" onclick="redeem()">Redeem Now</button>
-        </div>
-
-        <p onclick="logout()" style="text-align:center; color:#888; font-size:13px; cursor:pointer; margin-top:30px;">Logout Account</p>
+    <div class="balance-card">
+        <p style="margin:0; color:#666;">Current Balance</p>
+        <div class="coin-txt">🪙 <span id="balance">0</span></div>
+        <small>Minimum 10 Coins for ₹10</small>
     </div>
+
+    <div class="task-grid">
+        <div class="task-item" onclick="startTimer('Daily Check-in')">
+            <h4>📅 Daily Bonus</h4>
+        </div>
+        <div class="task-item" onclick="startTimer('Silver Scratch')">
+            <h4>🥈 Silver Task</h4>
+        </div>
+        <div class="task-item" onclick="startTimer('Golden Scratch')">
+            <h4>🥇 Gold Task</h4>
+        </div>
+        <div class="task-item" onclick="startTimer('Watch Video')">
+            <h4>📺 Watch Video</h4>
+        </div>
+    </div>
+
+    <div class="withdraw-box">
+        <h4>Redeem Money</h4>
+        <input type="text" id="upi" placeholder="Enter UPI ID (name@upi)">
+        <button class="btn-red" onclick="redeem()">Withdraw 10 Coins (₹10)</button>
+    </div>
+</div>
+
+<div id="overlay">
+    <h2 id="task-title">Task Running</h2>
+    <h1 id="timer">20</h1>
+    <p>Please wait for coins...</p>
 </div>
 
 <script>
@@ -91,43 +90,31 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    function login() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider);
-    }
-
-    function logout() { auth.signOut().then(() => location.reload()); }
+    function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
-            document.getElementById('user-display-name').innerText = user.displayName.split(' ')[0];
-            
+            document.getElementById('u-name').innerText = user.displayName;
             db.ref('users/' + user.uid).on('value', (s) => {
-                const val = s.val();
-                document.getElementById('balance').innerText = val ? val.coins : 0;
+                document.getElementById('balance').innerText = s.val() ? s.val().coins : 0;
             });
         }
     });
 
-    function startTask() {
-        const btn = document.getElementById('task-btn');
-        const timerBox = document.getElementById('timer-box');
-        let time = 20;
-
-        btn.disabled = true;
-        timerBox.style.display = 'block';
-
-        let inter = setInterval(() => {
-            time--;
-            document.getElementById('sec').innerText = time;
-            if(time <= 0) {
-                clearInterval(inter);
+    function startTimer(name) {
+        document.getElementById('task-title').innerText = name;
+        document.getElementById('overlay').style.display = 'flex';
+        let sec = 20;
+        let countdown = setInterval(() => {
+            sec--;
+            document.getElementById('timer').innerText = sec;
+            if(sec <= 0) {
+                clearInterval(countdown);
                 addCoin();
-                btn.disabled = false;
-                timerBox.style.display = 'none';
-                document.getElementById('sec').innerText = "20";
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('timer').innerText = "20";
             }
         }, 1000);
     }
@@ -138,19 +125,17 @@
             let coins = (c && c.coins) ? c.coins : 0;
             return { coins: coins + 1 };
         });
-        alert("Shabash! 1 Coin mil gaya.");
+        alert("Success! 1 Coin Added.");
     }
 
     function redeem() {
-        const upi = document.getElementById('upi-id').value;
+        const upi = document.getElementById('upi').value;
         const bal = parseInt(document.getElementById('balance').innerText);
-
-        if(bal < 10) { alert("Kam se kam 10 Coins hone chahiye!"); return; }
-        if(!upi.includes('@')) { alert("Sahi UPI ID dalein!"); return; }
-
-        const user = auth.currentUser;
-        db.ref('users/' + user.uid).update({ coins: bal - 10 });
-        alert("₹10 ki Request bhej di gayi hai UPI: " + upi + " par.");
+        if(bal < 10) { alert("Minimum 10 Coins required!"); return; }
+        if(!upi.includes('@')) { alert("Invalid UPI!"); return; }
+        
+        db.ref('users/' + auth.currentUser.uid).update({ coins: bal - 10 });
+        alert("Redeem Success! ₹10 sent to " + upi);
     }
 </script>
 </body>
