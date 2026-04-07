@@ -1,135 +1,183 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch & Earn - Real Copy</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    
-    <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; text-align: center; }
-        .header { background: #4a148c; color: white; padding: 20px; font-size: 20px; font-weight: bold; }
-        .balance-section { background: white; margin: 15px; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .coins { font-size: 30px; color: #ffab00; font-weight: bold; }
-        
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
-        .menu-item { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; font-weight: bold; color: #333; }
-        .menu-item:active { background: #eee; }
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zilu Earn App</title>
 
-        .withdraw-box { background: white; margin: 15px; padding: 20px; border-radius: 10px; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
-        .btn-redeem { background: #2e7d32; color: white; border: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#0f172a;
+    color:white;
+    text-align:center;
+}
+.container{padding:15px;}
+.box{
+    background:#1e293b;
+    padding:15px;
+    margin:10px;
+    border-radius:12px;
+}
+button{
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    background:#38bdf8;
+    color:black;
+    font-weight:bold;
+}
+input{
+    padding:10px;
+    width:80%;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+}
+.hidden{display:none;}
+</style>
 
-        /* Full Screen Timer Overlay */
-        #task-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; }
-        .loader { border: 8px solid #f3f3f3; border-top: 8px solid #4a148c; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 </head>
 <body>
 
-<div id="login-div" style="padding: 100px 20px;">
-    <h2>Earn Money Daily 💰</h2>
-    <button onclick="login()" style="padding: 15px 30px; background: #4a148c; color: white; border: none; border-radius: 5px; font-weight: bold;">LOGIN WITH GOOGLE</button>
+<div id="auth" class="container">
+    <h2>Login / Signup</h2>
+    <input id="username" placeholder="Enter Username"><br>
+    <button onclick="login()">Enter App</button>
 </div>
 
-<div id="app-div" style="display: none;">
-    <div class="header">WATCH AND EARN</div>
-    
-    <div class="balance-section">
-        <p>Aapke Coins</p>
-        <div class="coins">🪙 <span id="coin-balance">0</span></div>
-        <p style="font-size: 12px; color: #666;">(Minimum 10 Coins = ₹10 Withdraw)</p>
-    </div>
+<div id="app" class="hidden container">
 
-    <div class="grid">
-        <div class="menu-item" onclick="startTask('Daily Check-in')">📅 Daily Check-in</div>
-        <div class="menu-item" onclick="startTask('Silver Scratch')">🥈 Silver Task</div>
-        <div class="menu-item" onclick="startTask('Golden Scratch')">🥇 Gold Task</div>
-        <div class="menu-item" onclick="startTask('Watch Video')">📺 Watch Video</div>
-    </div>
+<h2>💰 Zilu Earn App</h2>
 
-    <div class="withdraw-box">
-        <h3>Redeem Money</h3>
-        <input type="text" id="upi-id" placeholder="UPI ID daalein (e.g. name@paytm)">
-        <button class="btn-redeem" onclick="redeem()">WITHDRAW 10 COINS</button>
-    </div>
-
-    <p onclick="logout()" style="color: red; cursor: pointer; margin-top: 20px;">Logout</p>
+<div class="box">
+    Wallet: <span id="coins">0</span> Coins
 </div>
 
-<div id="task-overlay">
-    <div class="loader"></div>
-    <h2 id="task-name">Task Running...</h2>
-    <h1 id="timer-txt">20</h1>
-    <p>Wait karein, coin load ho raha hai...</p>
+<div class="box">
+    <h3>📺 Watch Video</h3>
+    <button onclick="watchVideo()">Watch & Earn</button>
+</div>
+
+<div class="box">
+    <h3>🎡 Spin</h3>
+    <button onclick="spin()">Spin Now</button>
+</div>
+
+<div class="box">
+    <h3>🎁 Daily Bonus</h3>
+    <button onclick="daily()">Claim</button>
+</div>
+
+<div class="box">
+    <h3>👥 Refer</h3>
+    <p>Your Code: <b id="ref"></b></p>
+</div>
+
+<div class="box">
+    <h3>💳 Withdraw</h3>
+    <input id="upi" placeholder="Enter UPI ID"><br>
+    <button onclick="withdraw()">Withdraw 100 Coins</button>
+</div>
+
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCCpQmlyMQuzShY22Wnf53ajiyEdHofPv8",
-        authDomain: "watch-and-earn-22586.firebaseapp.com",
-        projectId: "watch-and-earn-22586",
-        databaseURL: "https://watch-and-earn-22586-default-rtdb.firebaseio.com/",
-        storageBucket: "watch-and-earn-22586.firebasestorage.app",
-        messagingSenderId: "1064239379784",
-        appId: "1:1064239379784:web:de48b0ea0826164c3eef7d"
-    };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
+let user = "";
+let coins = 0;
 
-    function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-    function logout() { auth.signOut().then(() => location.reload()); }
+// Load data
+function load(){
+    let data = JSON.parse(localStorage.getItem(user)) || {coins:0,lastBonus:0};
+    coins = data.coins;
+    update();
+}
 
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            document.getElementById('login-div').style.display = 'none';
-            document.getElementById('app-div').style.display = 'block';
-            db.ref('users/' + user.uid).on('value', (s) => {
-                document.getElementById('coin-balance').innerText = s.val() ? s.val().coins : 0;
-            });
-        }
-    });
+// Save data
+function save(){
+    localStorage.setItem(user, JSON.stringify({
+        coins: coins,
+        lastBonus: Date.now()
+    }));
+}
 
-    function startTask(name) {
-        document.getElementById('task-name').innerText = name;
-        document.getElementById('task-overlay').style.display = 'flex';
-        let timeLeft = 20;
-        let countdown = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timer-txt').innerText = timeLeft;
-            if(timeLeft <= 0) {
-                clearInterval(countdown);
-                addOneCoin();
-                document.getElementById('task-overlay').style.display = 'none';
-                document.getElementById('timer-txt').innerText = "20";
-            }
-        }, 1000);
+// Update UI
+function update(){
+    document.getElementById("coins").innerText = coins;
+}
+
+// Login
+function login(){
+    user = document.getElementById("username").value;
+    if(user==""){ alert("Enter username"); return; }
+
+    document.getElementById("auth").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+
+    document.getElementById("ref").innerText = "REF"+user;
+
+    load();
+}
+
+// Watch Video
+function watchVideo(){
+    alert("Playing video...");
+    setTimeout(()=>{
+        coins += 10;
+        update();
+        save();
+        alert("10 coins earned");
+    },2000);
+}
+
+// Spin
+function spin(){
+    let win = Math.floor(Math.random()*50);
+    coins += win;
+    update();
+    save();
+    alert("You got "+win+" coins");
+}
+
+// Daily Bonus
+function daily(){
+    let data = JSON.parse(localStorage.getItem(user));
+    let now = Date.now();
+
+    if(now - data.lastBonus < 86400000){
+        alert("Already claimed today");
+        return;
     }
 
-    function addOneCoin() {
-        const user = auth.currentUser;
-        db.ref('users/' + user.uid).transaction((current) => {
-            let coins = (current && current.coins) ? current.coins : 0;
-            return { coins: coins + 1 };
-        });
-        alert("Success! 1 Coin mil gaya.");
+    coins += 20;
+    update();
+    save();
+    alert("20 coins added");
+}
+
+// Withdraw
+function withdraw(){
+    let upi = document.getElementById("upi").value;
+
+    if(coins < 100){
+        alert("Minimum 100 coins needed");
+        return;
     }
 
-    function redeem() {
-        const upi = document.getElementById('upi-id').value;
-        const balance = parseInt(document.getElementById('coin-balance').innerText);
-
-        if(balance < 10) { alert("Balance kam hai! 10 Coins chahiye."); return; }
-        if(!upi.includes('@')) { alert("Sahi UPI ID dalein!"); return; }
-
-        db.ref('users/' + auth.currentUser.uid).update({ coins: balance - 10 });
-        alert("Withdrawal Request Sent! ₹10 to " + upi);
+    if(upi==""){
+        alert("Enter UPI ID");
+        return;
     }
+
+    coins -= 100;
+    update();
+    save();
+
+    alert("Withdrawal Requested (Demo)");
+}
+
 </script>
+
 </body>
 </html>
