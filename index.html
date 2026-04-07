@@ -3,76 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch & Earn - Professional</title>
+    <title>Watch & Earn - Real Copy</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
     <style>
-        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #f0f2f5; margin: 0; padding-bottom: 20px; }
-        .header { background: #1a73e8; color: white; padding: 20px; text-align: center; border-radius: 0 0 20px 20px; }
-        .balance-card { background: white; width: 90%; margin: -20px auto 20px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
-        .coin-txt { font-size: 30px; font-weight: bold; color: #1a73e8; }
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; text-align: center; }
+        .header { background: #4a148c; color: white; padding: 20px; font-size: 20px; font-weight: bold; }
+        .balance-section { background: white; margin: 15px; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .coins { font-size: 30px; color: #ffab00; font-weight: bold; }
         
-        /* Grid System for Tasks */
-        .task-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
-        .task-item { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #eee; }
-        .task-item img { width: 40px; margin-bottom: 10px; }
-        .task-item h4 { margin: 0; font-size: 14px; color: #333; }
-        
-        /* Withdraw Section */
-        .withdraw-box { background: white; margin: 15px; padding: 20px; border-radius: 15px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
-        .btn-red { background: #34a853; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; }
-        
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; justify-content: center; align-items: center; flex-direction: column; z-index: 100; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+        .menu-item { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; font-weight: bold; color: #333; }
+        .menu-item:active { background: #eee; }
+
+        .withdraw-box { background: white; margin: 15px; padding: 20px; border-radius: 10px; }
+        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        .btn-redeem { background: #2e7d32; color: white; border: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+
+        /* Full Screen Timer Overlay */
+        #task-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center; }
+        .loader { border: 8px solid #f3f3f3; border-top: 8px solid #4a148c; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div id="login-screen" style="text-align:center; padding:100px 20px;">
-    <h1>💰 Earn Real Cash</h1>
-    <button onclick="login()" style="padding:15px 30px; border-radius:30px; border:none; background:#1a73e8; color:white; font-weight:bold;">Login with Google</button>
+<div id="login-div" style="padding: 100px 20px;">
+    <h2>Earn Money Daily 💰</h2>
+    <button onclick="login()" style="padding: 15px 30px; background: #4a148c; color: white; border: none; border-radius: 5px; font-weight: bold;">LOGIN WITH GOOGLE</button>
 </div>
 
-<div id="main-app" style="display:none;">
-    <div class="header">
-        <h3>Welcome, <span id="u-name">User</span></h3>
+<div id="app-div" style="display: none;">
+    <div class="header">WATCH AND EARN</div>
+    
+    <div class="balance-section">
+        <p>Aapke Coins</p>
+        <div class="coins">🪙 <span id="coin-balance">0</span></div>
+        <p style="font-size: 12px; color: #666;">(Minimum 10 Coins = ₹10 Withdraw)</p>
     </div>
 
-    <div class="balance-card">
-        <p style="margin:0; color:#666;">Current Balance</p>
-        <div class="coin-txt">🪙 <span id="balance">0</span></div>
-        <small>Minimum 10 Coins for ₹10</small>
-    </div>
-
-    <div class="task-grid">
-        <div class="task-item" onclick="startTimer('Daily Check-in')">
-            <h4>📅 Daily Bonus</h4>
-        </div>
-        <div class="task-item" onclick="startTimer('Silver Scratch')">
-            <h4>🥈 Silver Task</h4>
-        </div>
-        <div class="task-item" onclick="startTimer('Golden Scratch')">
-            <h4>🥇 Gold Task</h4>
-        </div>
-        <div class="task-item" onclick="startTimer('Watch Video')">
-            <h4>📺 Watch Video</h4>
-        </div>
+    <div class="grid">
+        <div class="menu-item" onclick="startTask('Daily Check-in')">📅 Daily Check-in</div>
+        <div class="menu-item" onclick="startTask('Silver Scratch')">🥈 Silver Task</div>
+        <div class="menu-item" onclick="startTask('Golden Scratch')">🥇 Gold Task</div>
+        <div class="menu-item" onclick="startTask('Watch Video')">📺 Watch Video</div>
     </div>
 
     <div class="withdraw-box">
-        <h4>Redeem Money</h4>
-        <input type="text" id="upi" placeholder="Enter UPI ID (name@upi)">
-        <button class="btn-red" onclick="redeem()">Withdraw 10 Coins (₹10)</button>
+        <h3>Redeem Money</h3>
+        <input type="text" id="upi-id" placeholder="UPI ID daalein (e.g. name@paytm)">
+        <button class="btn-redeem" onclick="redeem()">WITHDRAW 10 COINS</button>
     </div>
+
+    <p onclick="logout()" style="color: red; cursor: pointer; margin-top: 20px;">Logout</p>
 </div>
 
-<div id="overlay">
-    <h2 id="task-title">Task Running</h2>
-    <h1 id="timer">20</h1>
-    <p>Please wait for coins...</p>
+<div id="task-overlay">
+    <div class="loader"></div>
+    <h2 id="task-name">Task Running...</h2>
+    <h1 id="timer-txt">20</h1>
+    <p>Wait karein, coin load ho raha hai...</p>
 </div>
 
 <script>
@@ -91,51 +83,52 @@
     const db = firebase.database();
 
     function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+    function logout() { auth.signOut().then(() => location.reload()); }
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            document.getElementById('u-name').innerText = user.displayName;
+            document.getElementById('login-div').style.display = 'none';
+            document.getElementById('app-div').style.display = 'block';
             db.ref('users/' + user.uid).on('value', (s) => {
-                document.getElementById('balance').innerText = s.val() ? s.val().coins : 0;
+                document.getElementById('coin-balance').innerText = s.val() ? s.val().coins : 0;
             });
         }
     });
 
-    function startTimer(name) {
-        document.getElementById('task-title').innerText = name;
-        document.getElementById('overlay').style.display = 'flex';
-        let sec = 20;
+    function startTask(name) {
+        document.getElementById('task-name').innerText = name;
+        document.getElementById('task-overlay').style.display = 'flex';
+        let timeLeft = 20;
         let countdown = setInterval(() => {
-            sec--;
-            document.getElementById('timer').innerText = sec;
-            if(sec <= 0) {
+            timeLeft--;
+            document.getElementById('timer-txt').innerText = timeLeft;
+            if(timeLeft <= 0) {
                 clearInterval(countdown);
-                addCoin();
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('timer').innerText = "20";
+                addOneCoin();
+                document.getElementById('task-overlay').style.display = 'none';
+                document.getElementById('timer-txt').innerText = "20";
             }
         }, 1000);
     }
 
-    function addCoin() {
+    function addOneCoin() {
         const user = auth.currentUser;
-        db.ref('users/' + user.uid).transaction((c) => {
-            let coins = (c && c.coins) ? c.coins : 0;
+        db.ref('users/' + user.uid).transaction((current) => {
+            let coins = (current && current.coins) ? current.coins : 0;
             return { coins: coins + 1 };
         });
-        alert("Success! 1 Coin Added.");
+        alert("Success! 1 Coin mil gaya.");
     }
 
     function redeem() {
-        const upi = document.getElementById('upi').value;
-        const bal = parseInt(document.getElementById('balance').innerText);
-        if(bal < 10) { alert("Minimum 10 Coins required!"); return; }
-        if(!upi.includes('@')) { alert("Invalid UPI!"); return; }
-        
-        db.ref('users/' + auth.currentUser.uid).update({ coins: bal - 10 });
-        alert("Redeem Success! ₹10 sent to " + upi);
+        const upi = document.getElementById('upi-id').value;
+        const balance = parseInt(document.getElementById('coin-balance').innerText);
+
+        if(balance < 10) { alert("Balance kam hai! 10 Coins chahiye."); return; }
+        if(!upi.includes('@')) { alert("Sahi UPI ID dalein!"); return; }
+
+        db.ref('users/' + auth.currentUser.uid).update({ coins: balance - 10 });
+        alert("Withdrawal Request Sent! ₹10 to " + upi);
     }
 </script>
 </body>
