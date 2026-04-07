@@ -3,44 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch & Earn</title>
+    <title>Watch & Earn Pro</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
-        h2 { color: #333; margin-bottom: 10px; }
-        p { color: #666; margin-bottom: 25px; }
-        .btn-google { background: #4285F4; color: white; border: none; padding: 12px 20px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; transition: 0.3s; }
-        .btn-google:hover { background: #357ae8; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; justify-content: center; align-items: center; height: 100vh; color: #333; }
+        .card { background: white; padding: 40px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 90%; max-width: 400px; transition: 0.3s; }
+        h2 { margin-bottom: 15px; color: #444; }
+        p { margin-bottom: 30px; color: #777; font-size: 14px; line-height: 1.5; }
+        .btn-google { background: #4285F4; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3); }
+        .btn-google:active { transform: scale(0.98); }
         .user-info { display: none; }
-        .coin-box { background: #fff3cd; color: #856404; padding: 15px; border-radius: 10px; font-size: 20px; font-weight: bold; margin: 20px 0; border: 1px solid #ffeeba; }
-        .logout-btn { color: #dc3545; cursor: pointer; text-decoration: underline; font-size: 14px; }
+        .coin-section { background: #fff9db; border: 2px dashed #fcc419; padding: 20px; border-radius: 15px; margin: 20px 0; }
+        .coin-count { font-size: 32px; font-weight: 800; color: #e67e22; }
+        .watch-btn { background: #2ecc71; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 18px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
+        .logout-link { display: block; margin-top: 20px; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="card" id="auth-card">
+    <div class="card">
         <div id="login-screen">
-            <h2>Watch & Earn 💰</h2>
-            <p>Video dekhein aur paise kamayein. Shuru karne ke liye login karein.</p>
-            <button class="btn-google" onclick="loginWithGoogle()">
-                Login with Google
+            <h2>💰 Earn Money</h2>
+            <p>Google se login karein aur video dekh kar unlimited coins kamayein.</p>
+            <button class="btn-google" onclick="login()">
+                Continue with Google
             </button>
         </div>
 
         <div id="main-app" class="user-info">
-            <h2 id="user-name">Namaste!</h2>
-            <div class="coin-box">Wallet: 🪙 100 Coins</div>
-            <p>Aaj ke naye videos taiyar hain!</p>
-            <button style="padding: 10px 20px; border-radius: 5px; border: none; background: #28a745; color: white;">Watch Video</button>
-            <br><br>
-            <span class="logout-btn" onclick="logout()">Logout (Bahat niklein)</span>
+            <h3 id="user-name">Welcome!</h3>
+            <div class="coin-section">
+                <p style="margin-bottom: 5px;">Aapka Balance</p>
+                <div class="coin-count">🪙 <span id="balance">0</span></div>
+            </div>
+            <button class="watch-btn" onclick="addCoins()">📺 Watch Video</button>
+            <span class="logout-link" onclick="logout()">LOGOUT</span>
         </div>
     </div>
 
     <script>
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCCpQmlyMQuzShY22Wnf53ajiyEdHofPv8",
             authDomain: "watch-and-earn-22586.firebaseapp.com",
@@ -52,33 +57,39 @@
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
 
-        function loginWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            // Isse page refresh nahi hoga, sidha login box khulega
-            auth.signInWithPopup(provider).then((result) => {
-                updateUI(result.user);
-            }).catch((error) => {
-                console.error(error);
-                // Agar popup block ho, toh redirect use karega
+        // Login Function
+        function login() {
+            auth.signInWithPopup(provider).catch(() => {
                 auth.signInWithRedirect(provider);
             });
         }
 
-        // Check if user is already logged in
-        auth.onAuthStateChanged((user) => {
-            if (user) { updateUI(user); }
-        });
-
-        function updateUI(user) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            document.getElementById('user-name').innerText = "Namaste, " + user.displayName;
-        }
-
+        // Logout Function
         function logout() {
-            auth.signOut().then(() => { location.reload(); });
+            auth.signOut().then(() => {
+                location.reload();
+            });
         }
+
+        // Coin System (Abhi ke liye local, baad mein database se jodenge)
+        let coins = 0;
+        function addCoins() {
+            coins += 10; // Har click par 10 coin badhenge
+            document.getElementById('balance').innerText = coins;
+            alert("Mubarak ho! Aapne 10 coins kamaye.");
+        }
+
+        // Auth State Observer (Ye check karega user logged in hai ya nahi)
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                document.getElementById('user-name').innerText = "Hello, " + user.displayName;
+            }
+        });
     </script>
 </body>
 </html>
