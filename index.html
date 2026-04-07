@@ -3,55 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch & Earn - Real App</title>
+    <title>Watch & Earn - Fast Edition</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; margin: 0; text-align: center; }
-        .container { padding: 20px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-top: 50px; border: 1px solid #333; }
-        .coin-box { font-size: 24px; color: #ffd700; margin: 20px 0; background: #222; padding: 10px; border-radius: 10px; }
-        button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-google { background: white; color: black; }
-        .btn-video { background: #ff0000; color: white; }
-        .btn-redeem { background: #008000; color: white; }
-        #video-player { display: none; margin-top: 20px; }
-        #redeem-screen { display: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0c29; background: linear-gradient(to right, #24243e, #302b63, #0f0c29); color: white; margin: 0; padding: 20px; }
+        .card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); max-width: 400px; margin: auto; }
+        .balance-card { background: #f1c40f; color: #000; padding: 15px; border-radius: 15px; font-size: 24px; font-weight: bold; margin: 20px 0; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
+        .btn-watch { background: #e74c3c; color: white; }
+        .btn-redeem { background: #2ecc71; color: white; }
+        .btn-google { background: white; color: #4285F4; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: none; margin-bottom: 15px; font-size: 16px; }
+        #timer { font-weight: bold; color: #e74c3c; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="login-screen" class="card">
-        <h1>Watch & Earn 💰</h1>
-        <p>Login karke real coins kamayein</p>
-        <button class="btn-google" onclick="login()">Continue with Google</button>
+<div class="card">
+    <div id="login-screen">
+        <h1>Welcome Back 💰</h1>
+        <p>Login karke paise kamana shuru karein</p>
+        <button class="btn-google" onclick="login()">Sign in with Google</button>
     </div>
 
     <div id="main-app" style="display:none;">
-        <div class="card">
-            <h2 id="user-name">Welcome</h2>
-            <div class="coin-box">🪙 Total Coins: <span id="balance">0</span></div>
-            
-            <button class="btn-video" onclick="showVideo()">📺 Play Video (Earn 10 Coins)</button>
-            <button class="btn-redeem" onclick="showRedeem()">🎁 Redeem Coins</button>
-            <p onclick="logout()" style="color: grey; cursor: pointer; margin-top: 20px;">Logout</p>
+        <h2 id="user-name">Namaste!</h2>
+        <div class="balance-card">🪙 Coins: <span id="balance">0</span></div>
+        
+        <div id="video-area">
+            <button class="btn-watch" id="watch-btn" onclick="startTask()">📺 Play Task Video</button>
+            <p id="timer">Intezar karein: <span id="seconds">15</span>s</p>
         </div>
 
-        <div id="video-player">
-            <iframe id="yt-player" width="100%" height="200" src="" frameborder="0" allowfullscreen></iframe>
-            <p>Video dekhein... 15 second mein coins jud jayenge!</p>
-        </div>
-    </div>
-
-    <div id="redeem-screen" class="card">
-        <h2>Redeem Your Money</h2>
-        <p>1000 Coins = ₹100</p>
-        <input type="text" id="upi-id" placeholder="Enter UPI ID" style="width: 80%; padding: 10px; margin-bottom: 10px;">
-        <button class="btn-redeem" onclick="processRedeem()">Submit Request</button>
-        <button onclick="hideRedeem()" style="background: grey;">Back</button>
+        <hr style="opacity: 0.3; margin: 20px 0;">
+        
+        <h3>Redeem via UPI</h3>
+        <input type="text" id="upi-id" placeholder="Enter UPI ID (e.g. name@paytm)">
+        <button class="btn-redeem" onclick="requestRedeem()">Redeem 1000 Coins (₹100)</button>
+        
+        <p onclick="logout()" style="cursor:pointer; opacity:0.6; font-size:14px; margin-top:20px;">Logout karein</p>
     </div>
 </div>
 
@@ -72,6 +65,7 @@
 
     function login() {
         const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
         auth.signInWithPopup(provider);
     }
 
@@ -83,38 +77,66 @@
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('user-name').innerText = "Hello, " + user.displayName;
             
-            // Real Data Fetch from Firebase
-            database.ref('users/' + user.uid).on('value', (snapshot) => {
-                const data = snapshot.val();
+            // Database se coins load karna
+            database.ref('users/' + user.uid).on('value', (snap) => {
+                const data = snap.val();
                 document.getElementById('balance').innerText = data ? data.coins : 0;
             });
         }
     });
 
-    function showVideo() {
-        document.getElementById('video-player').style.display = 'block';
-        // Yahan aap koi bhi YouTube video link daal sakte hain
-        document.getElementById('yt-player').src = "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1";
-        
-        // 15 second baad auto coin add
-        setTimeout(() => {
-            const user = auth.currentUser;
-            database.ref('users/' + user.uid).transaction((currentData) => {
-                return { coins: (currentData ? currentData.coins : 0) + 10 };
-            });
-            alert("Video Complete! 10 Coins Added.");
-            document.getElementById('video-player').style.display = 'none';
-            document.getElementById('yt-player').src = "";
-        }, 15000);
+    // Fast Task System
+    function startTask() {
+        let timeLeft = 15;
+        const btn = document.getElementById('watch-btn');
+        const timerText = document.getElementById('timer');
+        const secSpan = document.getElementById('seconds');
+
+        btn.disabled = true;
+        btn.innerText = "Task Running...";
+        timerText.style.display = "block";
+
+        let countdown = setInterval(() => {
+            timeLeft--;
+            secSpan.innerText = timeLeft;
+            if(timeLeft <= 0) {
+                clearInterval(countdown);
+                addCoins();
+                btn.disabled = false;
+                btn.innerText = "📺 Play Task Video";
+                timerText.style.display = "none";
+                secSpan.innerText = "15";
+            }
+        }, 1000);
     }
 
-    function showRedeem() { document.getElementById('main-app').style.display = 'none'; document.getElementById('redeem-screen').style.display = 'block'; }
-    function hideRedeem() { document.getElementById('main-app').style.display = 'block'; document.getElementById('redeem-screen').style.display = 'none'; }
+    function addCoins() {
+        const user = auth.currentUser;
+        database.ref('users/' + user.uid).transaction((current) => {
+            let coins = (current && current.coins) ? current.coins : 0;
+            return { coins: coins + 10 };
+        });
+        alert("🎉 10 Coins Mil Gaye!");
+    }
 
-    function processRedeem() {
+    function requestRedeem() {
         const upi = document.getElementById('upi-id').value;
-        if(upi) { alert("Redeem request sent for UPI: " + upi + ". Admin will process in 24h."); hideRedeem(); }
-        else { alert("Please enter UPI ID"); }
+        const currentCoins = parseInt(document.getElementById('balance').innerText);
+
+        if(!upi.includes('@')) {
+            alert("Sahi UPI ID daliye!");
+            return;
+        }
+
+        if(currentCoins < 1000) {
+            alert("Kam se kam 1000 coins chahiye!");
+            return;
+        }
+
+        // Coins minus karna aur admin ko request bhejna
+        const user = auth.currentUser;
+        database.ref('users/' + user.uid).update({ coins: currentCoins - 1000 });
+        alert("Request bhej di gayi hai! ₹100 aapke UPI: " + upi + " par bhej diye jayenge.");
     }
 </script>
 </body>
