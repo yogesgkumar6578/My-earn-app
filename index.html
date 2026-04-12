@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zilu Earn App</title>
+<title>Zilu Pro</title>
 
 <style>
 body{
@@ -10,153 +10,185 @@ body{
     font-family:Arial;
     background:#0f172a;
     color:white;
-    text-align:center;
 }
-.container{padding:15px;}
-.box{
+
+/* HEADER */
+.header{
+    padding:15px;
+    text-align:center;
+    background:linear-gradient(45deg,#38bdf8,#6366f1);
+    font-size:20px;
+}
+
+/* PAGE */
+.page{
+    display:none;
+    padding:15px;
+}
+.active{display:block;}
+
+/* CARD */
+.card{
     background:#1e293b;
     padding:15px;
-    margin:10px;
-    border-radius:12px;
+    border-radius:15px;
+    margin:10px 0;
 }
+
+/* BUTTON */
 button{
     padding:10px 15px;
     border:none;
-    border-radius:8px;
+    border-radius:10px;
     background:#38bdf8;
-    color:black;
     font-weight:bold;
 }
-input{
-    padding:10px;
-    width:80%;
-    margin:5px;
-    border-radius:8px;
-    border:none;
+
+/* NAVBAR */
+.nav{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#1e293b;
+    display:flex;
+    justify-content:space-around;
+    padding:10px 0;
 }
-.hidden{display:none;}
+
+.nav button{
+    background:none;
+    color:white;
+}
+
+/* VIDEO MODAL */
+#videoBox{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:black;
+    justify-content:center;
+    align-items:center;
+}
 </style>
 
 </head>
 <body>
 
-<div id="auth" class="container">
-    <h2>Login / Signup</h2>
-    <input id="username" placeholder="Enter Username"><br>
-    <button onclick="login()">Enter App</button>
+<div class="header">💰 Zilu Pro</div>
+
+<!-- HOME -->
+<div id="home" class="page active">
+    <div class="card">
+        💰 Coins: <span id="coins">0</span>
+    </div>
+
+    <div class="card">
+        <h3>📺 Watch Video</h3>
+        <button onclick="playVideo()">Play Video</button>
+    </div>
+
+    <div class="card">
+        <h3>🎡 Spin</h3>
+        <button onclick="spin()">Spin Now</button>
+    </div>
 </div>
 
-<div id="app" class="hidden container">
+<!-- WALLET -->
+<div id="wallet" class="page">
+    <div class="card">
+        <h3>Wallet Balance</h3>
+        <p id="walletCoins">0 Coins</p>
+    </div>
 
-<h2>💰 Zilu Earn App</h2>
-
-<div class="box">
-    Wallet: <span id="coins">0</span> Coins
+    <div class="card">
+        <h3>Withdraw</h3>
+        <input id="upi" placeholder="Enter UPI ID"><br><br>
+        <button onclick="withdraw()">Withdraw 100</button>
+    </div>
 </div>
 
-<div class="box">
-    <h3>📺 Watch Video</h3>
-    <button onclick="watchVideo()">Watch & Earn</button>
+<!-- PROFILE -->
+<div id="profile" class="page">
+    <div class="card">
+        <h3>👤 Profile</h3>
+        <img id="pic" width="80"><br><br>
+        <b id="name"></b><br>
+        <p id="email"></p>
+    </div>
+
+    <button onclick="logout()">Logout</button>
 </div>
 
-<div class="box">
-    <h3>🎡 Spin</h3>
-    <button onclick="spin()">Spin Now</button>
+<!-- VIDEO PLAYER -->
+<div id="videoBox" onclick="closeVideo()">
+    <iframe id="videoFrame" width="300" height="200"
+    src="" allowfullscreen></iframe>
 </div>
 
-<div class="box">
-    <h3>🎁 Daily Bonus</h3>
-    <button onclick="daily()">Claim</button>
-</div>
-
-<div class="box">
-    <h3>👥 Refer</h3>
-    <p>Your Code: <b id="ref"></b></p>
-</div>
-
-<div class="box">
-    <h3>💳 Withdraw</h3>
-    <input id="upi" placeholder="Enter UPI ID"><br>
-    <button onclick="withdraw()">Withdraw 100 Coins</button>
-</div>
-
+<!-- NAVBAR -->
+<div class="nav">
+    <button onclick="showPage('home')">Home</button>
+    <button onclick="showPage('wallet')">Wallet</button>
+    <button onclick="showPage('profile')">Profile</button>
 </div>
 
 <script>
 
-let user = "";
-let coins = 0;
+// ===== USER =====
+let user = JSON.parse(localStorage.getItem("user")) || {
+    name:"Guest",
+    email:"guest@email.com",
+    pic:"https://via.placeholder.com/80"
+};
 
-// Load data
-function load(){
-    let data = JSON.parse(localStorage.getItem(user)) || {coins:0,lastBonus:0};
-    coins = data.coins;
-    update();
-}
+// ===== COINS =====
+let coins = parseInt(localStorage.getItem("coins")) || 0;
 
-// Save data
-function save(){
-    localStorage.setItem(user, JSON.stringify({
-        coins: coins,
-        lastBonus: Date.now()
-    }));
-}
-
-// Update UI
 function update(){
     document.getElementById("coins").innerText = coins;
+    document.getElementById("walletCoins").innerText = coins + " Coins";
+}
+update();
+
+// ===== NAVIGATION =====
+function showPage(page){
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    document.getElementById(page).classList.add("active");
 }
 
-// Login
-function login(){
-    user = document.getElementById("username").value;
-    if(user==""){ alert("Enter username"); return; }
+// ===== VIDEO =====
+function playVideo(){
+    document.getElementById("videoBox").style.display="flex";
+    document.getElementById("videoFrame").src =
+    "https://www.youtube.com/embed/dQw4w9WgXcQ";
 
-    document.getElementById("auth").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
-
-    document.getElementById("ref").innerText = "REF"+user;
-
-    load();
-}
-
-// Watch Video
-function watchVideo(){
-    alert("Playing video...");
+    // earn after 5 sec
     setTimeout(()=>{
         coins += 10;
+        localStorage.setItem("coins", coins);
         update();
-        save();
-        alert("10 coins earned");
-    },2000);
+        alert("10 coins earned!");
+    },5000);
 }
 
-// Spin
+function closeVideo(){
+    document.getElementById("videoBox").style.display="none";
+    document.getElementById("videoFrame").src="";
+}
+
+// ===== SPIN =====
 function spin(){
     let win = Math.floor(Math.random()*50);
     coins += win;
+    localStorage.setItem("coins", coins);
     update();
-    save();
-    alert("You got "+win+" coins");
+    alert("You won "+win);
 }
 
-// Daily Bonus
-function daily(){
-    let data = JSON.parse(localStorage.getItem(user));
-    let now = Date.now();
-
-    if(now - data.lastBonus < 86400000){
-        alert("Already claimed today");
-        return;
-    }
-
-    coins += 20;
-    update();
-    save();
-    alert("20 coins added");
-}
-
-// Withdraw
+// ===== WITHDRAW =====
 function withdraw(){
     let upi = document.getElementById("upi").value;
 
@@ -171,10 +203,21 @@ function withdraw(){
     }
 
     coins -= 100;
+    localStorage.setItem("coins", coins);
     update();
-    save();
 
     alert("Withdrawal Requested (Demo)");
+}
+
+// ===== PROFILE =====
+document.getElementById("pic").src = user.pic;
+document.getElementById("name").innerText = user.name;
+document.getElementById("email").innerText = user.email;
+
+// ===== LOGOUT =====
+function logout(){
+    localStorage.clear();
+    location.reload();
 }
 
 </script>
